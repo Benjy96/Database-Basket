@@ -2,10 +2,14 @@
   session_start();
   include ("dbConnect.php");
   
+  //if not logged in, this will return you to login page
   if (!isset($_SESSION["currentUserID"])) 
      header("Location: login.php");
 
-     
+	//store details action 
+	//declare payment details in POST arrays, POST is a super global to collect form data - always accessible 
+	//POST is passed via HTTP POST method, whereas GET is less secure and passed via URL
+	//POST IS INVISIBLE TO OTHERS, has NO LIMITS on amount of information to send
   if (isset($_POST["action"]) && $_POST["action"]=="storeDetails") {
      $name=$_POST["name"]; $email=$_POST["email"]; $street=$_POST["street"]; $town=$_POST["town"];
      $county=$_POST["county"]; $country=$_POST["country"]; $postcode=$_POST["postcode"];
@@ -15,15 +19,18 @@
      $validTo=$_POST["validToMonth"]."/".$_POST["validToYear"];
      $cv2=$_POST["cv2"]; $issueNumber=$_POST["issueNumber"];
 
+	 //retrieves id (user) from database
      $dbQuery=$db->prepare("select id from paymentDetails where userID=:userID");
      $dbParams = array('userID'=>$_SESSION["currentUserID"]);  
      $dbQuery->execute($dbParams);
+	 //if no payment details already provided, they will be inserted here
      if ($dbQuery->rowCount()==0) 
         $dbQuery=$db->prepare("insert into paymentDetails values (null,:userID ".
                  ",:name,:email,:street,:town,:county,:country,:postcode ".
                  ",:cardType,:cardNumber,:cardHolder,:validFrom,:validTo ".
                  ",:cv2,:issueNumber)");
      else
+	//if payment details are already provided, this else will update the details
         $dbQuery=$db->prepare("update paymentDetails set name=:name,email=:email,street=:street ".
                  ",town=:town,county=:county,country=:country,postcode=:postcode".
                  ",cardType=:cardType,cardNumber=:cardNumber,cardHolder=:cardHolder".
@@ -36,7 +43,7 @@
                        'cv2'=>$cv2, 'issueNumber'=>$issueNumber);            
      $dbQuery->execute($dbParams);
      header("Location: checkout.php"); 
-  }
+  }//if
   
 else {
 
@@ -63,7 +70,7 @@ else {
 <hr>
 
 <?php
-
+//retrieve details else set to default values
 $dbQuery=$db->prepare("select * from paymentDetails where userID=:userID");
 $dbParams = array('userID'=>$_SESSION["currentUserID"]);
 $dbQuery->execute($dbParams);
